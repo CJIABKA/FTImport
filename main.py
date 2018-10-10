@@ -10,4 +10,4 @@ ResultPath = u'C:\\Share\\TestImport'
 Result = Project(XLSfolerPath, ResultPath)
 Result.main()
 
-print (u'Первый этап выполнен, внесите необходимые изменения')
+print (u'All done')
