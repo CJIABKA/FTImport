@@ -352,6 +352,7 @@ class XLSbase(object):
         self.DataSets = []
         self.DataSetsNames = []
         self.GetDataSetsFromFiles(folderpath)
+        self.CheckDataSetsItems()
         self.CheckDataSetsReferences()
         self.Tidy()
 
@@ -453,15 +454,124 @@ class XLSbase(object):
                             if breakflag:
                                 break
             itm.ItemsCount = len(itm.Items)
+        pointnames = []
+        if itm:
+            for item in itm.Items:
+                pointnames.append(item.Point_name)
+            for dspointname in self.FieldsReferences['ITEM_DF']['POINT_NAME']:
+                pnt = self.GetDatsSebByName(dspointname)
+                if pnt:
+                    temppntItems = pnt.Items[:]
+                    for point in temppntItems:
+                        if point.Name not in pointnames:
+                            pnt.Items.remove(point)
+                            pnt.ItemsCount = len(pnt.Items)
 
-    def HasDataSetThatItem(self, DataSet):
-        result = False
-        for dataset in self.DataSets:
-            dsName = dataset.Name.upper()
-            if DataSet == dsName:
-                result = True
-                break
-        return result
+    def CheckDataSetsItems(self):
+        for DataSet in self.DataSets:
+            if DataSet.Name.upper() == u'ITEM_DF':
+                for item in DataSet.Items:
+                    #сначала сбор и анализ данных подлежащих проверке
+                    if item.__dict__.get('Name') and item.Name != '':
+                        name = item.Name
+                        if '.' in item.Name:
+                            partsofname = item.Name.split('.')
+                            section = '.'.join(partsofname[:-1])
+                            tag = partsofname[-1]
+                            if len(partsofname) > 2:
+                                install = partsofname[0]
+                                unit = partsofname[1]
+                            else:
+                                install = partsofname[0]
+                                unit = ''
+                        else:
+                            tag = item.Name
+                            section = ''
+                            install = ''
+                            unit = ''
+                    elif item.__dict__.get('Tag') and item.Tag != '':
+                        tag = item.Tag
+                        if item.__dict__.get('Section_path') and item.Section_path != '':
+                            section = item.Section_path
+                            name = section + '.' + tag
+                            if '.' in item.Section_path:
+                                partsofpath = item.Section_path.split('.')
+                                install = partsofpath[0]
+                                unit = partsofpath[1]
+                            else:
+                                install = section
+                                unit = ''
+                    else:
+                        print u'Критическая ошибка в датасете ITEM_DF нет ни имени айтема Name, ни имени тега Tag (нужно хотя бы что-то одно'
+                    if item.__dict__.get('Point_name') and item.Point_name != '' and item.Point_name != ':':
+                        pointname = item.Point_name
+                        partsofpoint = item.Point_name.split(':')
+                        station = partsofpoint[0]
+                        point = partsofpoint[1]
+                    elif item.__dict__.get('Station') and item.Station != '' and item.__dict__.get('Point') and item.Point != '':
+                        station = item.Station
+                        point = item.Point
+                        pointname = station + ':' + point
+                    else:
+                        pointname = ':'
+                        station = ''
+                        point = ''
+                    #Теперь внесение данных
+                    item.Name = name
+                    item.Point_name = pointname
+                    if item.__dict__.get('Section_path'):
+                        item.Section_path = section
+                    if item.__dict__.get('Tag'):
+                        item.Tag = tag
+                    if item.__dict__.get('Install'):
+                        item.Install = install
+                    if item.__dict__.get('Unit'):
+                        item.Unit = unit
+                    if item.__dict__.get('Station'):
+                        item.Station = station
+                    if item.__dict__.get('Point'):
+                        item.Point = point
+
+            elif DataSet.Name.upper() in self.FieldsReferences['ITEM_DF']['POINT_NAME']:
+                for item in DataSet.Items:
+                    if item.__dict__.get('Name') and item.Name != '':
+                        name = item.Name
+                        partsofpoint = item.Name.split(':')
+                        station = partsofpoint[0]
+                        point = partsofpoint[1]
+                    elif item.__dict__.get('Station') and item.Station != '' and item.__dict__.get('Point') and item.Point != '':
+                        station = item.Station
+                        point = item.Point
+                        name = station + ':' + point
+                    else:
+                        print u'Критическая ошибка в датасете ' + DataSet.Name + u' нет данных о point'
+                    item.Name = name
+                    if item.__dict__.get('Station'):
+                        item.Station = station
+                    if item.__dict__.get('Point'):
+                        item.Point = point
+            elif DataSet.Name.upper() == u'ITEM_HIS_DF':
+                for item in DataSet.Items:
+                    #сначала сбор и анализ данных подлежащих проверке
+                    if item.__dict__.get('Name') and item.Name != '':
+                        partsofhis = item.Name.split(':')
+                        item.Group_name = partsofhis[0]
+                        item.Item_name = partsofhis[1]
+                    elif item.__dict__.get('Group_name') and item.Group_name != '' and item.__dict__.get('Item_name') and item.Item_name != '':
+                        item.Name = item.Group_name + ':' + item.Item_name
+                    else:
+                        print u'Критическая ошибка в датасете ' + DataSet.Name
+            elif DataSet.Name.upper() == u'ALARM_DISPLAY_DF':
+                for item in DataSet.Items:
+                    #сначала сбор и анализ данных подлежащих проверке
+                    if item.__dict__.get('Name') and item.Name != '':
+                        partsofalrd = item.Name.split(':')
+                        item.Item = partsofalrd[0]
+                        item.Display_name = partsofalrd[2]
+                    elif item.__dict__.get('Item') and item.Item != '' and item.__dict__.get('Display_name') and item.Display_name != '':
+                        item.Name = item.Item + '::' + item.Display_name
+                    else:
+                        print u'Критическая ошибка в датасете ' + DataSet.Name
 
     def SayWhatYouHave(self):
         for k in self.DataSets:
