@@ -369,6 +369,7 @@ class XLSbase(object):
         for dataset in self.DataSets:
             #Если в дата сете есть элементы
             if dataset.ItemsCount > 0:
+                dataset.GetItemsNames()
                 dsName = dataset.Name.upper()
                 #Проверяем есть ли датасэт в перечне датасэтов с ссылками на другие датасэты
                 if dsName in self.FieldsReferences:
@@ -518,7 +519,13 @@ class XLSbase(object):
                         point = ''
                     #Теперь внесение данных
                     item.Name = name
+                    if u'Name' not in DataSet.Fields:
+                        DataSet.Fields.insert(0, u'Name')
+                        DataSet.FieldsCount += 1
                     item.Point_name = pointname
+                    if u'Point_name' not in DataSet.Fields:
+                        DataSet.Fields.insert(1, u'Name')
+                        DataSet.FieldsCount += 1
                     if item.__dict__.get('Section_path'):
                         item.Section_path = section
                     if item.__dict__.get('Tag'):
@@ -531,7 +538,6 @@ class XLSbase(object):
                         item.Station = station
                     if item.__dict__.get('Point'):
                         item.Point = point
-
             elif DataSet.Name.upper() in self.FieldsReferences['ITEM_DF']['POINT_NAME']:
                 for item in DataSet.Items:
                     if item.__dict__.get('Name') and item.Name != '':
@@ -546,6 +552,9 @@ class XLSbase(object):
                     else:
                         print u'Критическая ошибка в датасете ' + DataSet.Name + u' нет данных о point'
                     item.Name = name
+                    if u'Name' not in DataSet.Fields:
+                        DataSet.Fields.insert(0, u'Name')
+                        DataSet.FieldsCount += 1
                     if item.__dict__.get('Station'):
                         item.Station = station
                     if item.__dict__.get('Point'):
@@ -559,6 +568,9 @@ class XLSbase(object):
                         item.Item_name = partsofhis[1]
                     elif item.__dict__.get('Group_name') and item.Group_name != '' and item.__dict__.get('Item_name') and item.Item_name != '':
                         item.Name = item.Group_name + ':' + item.Item_name
+                        if u'Name' not in DataSet.Fields:
+                            DataSet.Fields.insert(0, u'Name')
+                            DataSet.FieldsCount += 1
                     else:
                         print u'Критическая ошибка в датасете ' + DataSet.Name
             elif DataSet.Name.upper() == u'ALARM_DISPLAY_DF':
@@ -570,6 +582,9 @@ class XLSbase(object):
                         item.Display_name = partsofalrd[2]
                     elif item.__dict__.get('Item') and item.Item != '' and item.__dict__.get('Display_name') and item.Display_name != '':
                         item.Name = item.Item + '::' + item.Display_name
+                        if u'Name' not in DataSet.Fields:
+                            DataSet.Fields.insert(0, u'Name')
+                            DataSet.FieldsCount += 1
                     else:
                         print u'Критическая ошибка в датасете ' + DataSet.Name
 
@@ -622,7 +637,7 @@ class DataSet(object):
             self.ItemsCount = len(self.Items)
         #Проверяем неиспользуемые (во всех элементах пустое) поля
         self.GetEmptyFields()
-        self.GetItemsNames()
+        #self.GetItemsNames()
 
     def GetEmptyFields(self):
         self.EmptyFields = self.Fields[:]

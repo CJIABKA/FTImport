@@ -125,7 +125,7 @@ class Project(object):
                     break
         obj = self.Base.GetDatsSebByName(u'OBJECT_DF')
         itm = self.Base.GetDatsSebByName(u'ITEM_DF')
-        if obj and itm:
+        if obj and itm and obj in self.Order and itm in self.Order:
             self.Order.remove(obj)
             index = self.Order.index(itm)
             self.Order.insert(index+1, obj)
